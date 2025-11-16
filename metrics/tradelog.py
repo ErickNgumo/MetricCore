@@ -217,6 +217,12 @@ class TradeLog:
         })
         
         return equity_curve
+    
+    def __repr__(self):
+        return f"TradeLog({len(self.df)} trades, {self.df['symbol'].nunique()} symbols)"
+    
+    def __len__(self):
+        return len(self.df)
 
 
               
