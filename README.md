@@ -70,7 +70,7 @@ Optional columns may be included and are coerced to numeric if present:
 
 `risk_amount`
 
-Validation Rules
+### Validation Rules
 The `TradeLog` class enforces several rules:
 
 All required columns must be present
@@ -91,7 +91,7 @@ Trade log must contain at least one row
 
 Validation failures raise `TradeLogValidationError` with a descriptive message.
 
-Generating an Equity Curve
+### Generating an Equity Curve
 The method `to_equity_curve()` computes:
 
 cumulative account balance
@@ -117,7 +117,7 @@ Output DataFrame columns:
 
 `returns` — percent return based on prior balance
 
-Exceptions
+### Exceptions
 All validation failures raise:
 '''
 python
@@ -125,5 +125,5 @@ TradeLogValidationError
 '''
 This allows clean, predictable error handling in trading pipelines.
 
-Summary
+### Summary
 TradeLog provides a robust foundation for validating, cleaning, and preparing trade data for quantitative analysis. It reduces downstream errors, enforces consistent structure, and offers a reliable method for generating equity curves used by risk and performance metrics.
