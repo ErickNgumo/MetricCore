@@ -27,10 +27,9 @@ class TradeLog:
     OPTIONAL_COLUMNS = [
         "return_pct",
         "risk_amount",
-        "comment"
     ]
 
-    VALID_DIRECTIONS = ["LONG", "SHORT"]
+    VALID_DIRECTIONS = ["long", "short"]
 
     def __init__(self, data: Union[str, Path, pd.DataFrame]):
         """
