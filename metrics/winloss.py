@@ -167,3 +167,208 @@ def profit_factor(df: pd.DataFrame) -> float:
         return 0.0
     
     return total_wins / abs(total_losses)
+
+
+def _compute_streaks(series: pd.Series) -> list:
+    """
+    Helper function to compute consecutive streaks in a boolean series.
+    
+    Args:
+        series: Boolean series (True = win, False = loss)
+        
+    Returns:
+        List of streak lengths
+    """
+    if len(series) == 0:
+        return []
+    
+    # Convert to numpy for efficient computation
+    arr = series.values
+    
+    # Find where values change
+    changes = np.concatenate(([True], arr[1:] != arr[:-1], [True]))
+    change_indices = np.where(changes)[0]
+    
+    # Calculate streak lengths
+    streaks = np.diff(change_indices)
+    
+    # Get the actual values at streak starts
+    streak_values = arr[change_indices[:-1]]
+    
+    return list(zip(streak_values, streaks))
+
+
+def longest_win_streak(df: pd.DataFrame) -> int:
+    """
+    Return the longest consecutive series of winning trades.
+    
+    Args:
+        df: Validated trade log DataFrame with 'pnl' column
+        
+    Returns:
+        Maximum number of consecutive winning trades
+        
+    Example:
+        >>> longest_win_streak(df)
+        7  # Had 7 wins in a row at best
+    """
+    if len(df) == 0:
+        return 0
+    
+    # Sort by exit timestamp to get chronological order
+    if 'timestamp_exit' in df.columns:
+        df_sorted = df.sort_values('timestamp_exit')
+    else:
+        df_sorted = df
+    
+    is_win = df_sorted['pnl'] > 0
+    streaks = _compute_streaks(is_win)
+    
+    win_streaks = [length for is_w, length in streaks if is_w]
+    
+    return max(win_streaks) if win_streaks else 0
+
+
+def longest_loss_streak(df: pd.DataFrame) -> int:
+    """
+    Return the longest consecutive series of losing trades.
+    
+    This is your "emotional drawdown" metric — how many losses in a row
+    you need to stomach before the next win arrives.
+    
+    Args:
+        df: Validated trade log DataFrame with 'pnl' column
+        
+    Returns:
+        Maximum number of consecutive losing trades
+        
+    Example:
+        >>> longest_loss_streak(df)
+        5  # Worst streak was 5 losses in a row
+    """
+    if len(df) == 0:
+        return 0
+    
+    # Sort by exit timestamp to get chronological order
+    if 'timestamp_exit' in df.columns:
+        df_sorted = df.sort_values('timestamp_exit')
+    else:
+        df_sorted = df
+    
+    is_loss = df_sorted['pnl'] < 0
+    streaks = _compute_streaks(is_loss)
+    
+    loss_streaks = [length for is_l, length in streaks if is_l]
+    
+    return max(loss_streaks) if loss_streaks else 0
+
+
+def streak_distribution(df: pd.DataFrame) -> Dict[str, Dict[int, int]]:
+    """
+    Get the distribution of win and loss streaks.
+    
+    This shows how often you experience streaks of different lengths.
+    
+    Args:
+        df: Validated trade log DataFrame with 'pnl' column
+        
+    Returns:
+        Dictionary with 'wins' and 'losses' keys, each containing
+        a dictionary mapping streak length to frequency
+        
+    Example:
+        >>> streak_distribution(df)
+        {
+            'wins': {1: 15, 2: 8, 3: 4, 5: 1},  # Had one 5-win streak
+            'losses': {1: 12, 2: 5, 3: 2}
+        }
+    """
+    if len(df) == 0:
+        return {'wins': {}, 'losses': {}}
+    
+    # Sort by exit timestamp
+    if 'timestamp_exit' in df.columns:
+        df_sorted = df.sort_values('timestamp_exit')
+    else:
+        df_sorted = df
+    
+    is_win = df_sorted['pnl'] > 0
+    streaks = _compute_streaks(is_win)
+    
+    win_streaks = [length for is_w, length in streaks if is_w]
+    loss_streaks = [length for is_w, length in streaks if not is_w]
+    
+    # Count frequencies
+    win_dist = pd.Series(win_streaks).value_counts().to_dict() if win_streaks else {}
+    loss_dist = pd.Series(loss_streaks).value_counts().to_dict() if loss_streaks else {}
+    
+    return {
+        'wins': dict(sorted(win_dist.items())),
+        'losses': dict(sorted(loss_dist.items()))
+    }
+
+
+def win_loss_ratio(df: pd.DataFrame) -> float:
+    """
+    Ratio of average win to absolute average loss.
+    
+    Also known as the payoff ratio or reward-to-risk ratio.
+    
+    Args:
+        df: Validated trade log DataFrame with 'pnl' column
+        
+    Returns:
+        Ratio of avg_win / abs(avg_loss). Returns inf if no losses.
+        
+    Example:
+        >>> win_loss_ratio(df)
+        2.0  # Average win is 2x the size of average loss
+    """
+    avg_w = average_win(df)
+    avg_l = average_loss(df)
+    
+    if avg_l == 0:
+        return float('inf') if avg_w > 0 else 0.0
+    
+    return avg_w / abs(avg_l)
+
+
+def summary(df: pd.DataFrame) -> Dict[str, float]:
+    """
+    Generate a comprehensive win/loss summary report.
+    
+    Args:
+        df: Validated trade log DataFrame with 'pnl' column
+        
+    Returns:
+        Dictionary containing all key win/loss metrics
+        
+    Example:
+        >>> summary(df)
+        {
+            'total_trades': 100,
+            'win_rate': 0.60,
+            'loss_rate': 0.35,
+            'breakeven_rate': 0.05,
+            'average_win': 250.0,
+            'average_loss': -150.0,
+            'expectancy': 97.5,
+            'profit_factor': 2.14,
+            'win_loss_ratio': 1.67,
+            'longest_win_streak': 8,
+            'longest_loss_streak': 5
+        }
+    """
+    return {
+        'total_trades': len(df),
+        'win_rate': win_rate(df),
+        'loss_rate': loss_rate(df),
+        'breakeven_rate': breakeven_rate(df),
+        'average_win': average_win(df),
+        'average_loss': average_loss(df),
+        'expectancy': expectancy(df),
+        'profit_factor': profit_factor(df),
+        'win_loss_ratio': win_loss_ratio(df),
+        'longest_win_streak': longest_win_streak(df),
+        'longest_loss_streak': longest_loss_streak(df)
+    }
