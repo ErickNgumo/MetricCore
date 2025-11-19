@@ -221,6 +221,11 @@ def longest_win_streak(df: pd.DataFrame) -> int:
     else:
         df_sorted = df
     
+    # Drop breakeven trades for win streak calculation    
+    filtered = df_sorted[df_sorted['pnl'] != 0]
+    if len(filtered) == 0:
+        return 0
+    
     is_win = df_sorted['pnl'] > 0
     streaks = _compute_streaks(is_win)
     
@@ -254,6 +259,11 @@ def longest_loss_streak(df: pd.DataFrame) -> int:
         df_sorted = df.sort_values('timestamp_exit')
     else:
         df_sorted = df
+    
+    #Drop breakeven trades for loss streak calculation    
+    filtered = df_sorted[df_sorted['pnl'] != 0]
+    if len(filtered) == 0:
+        return 0
     
     is_loss = df_sorted['pnl'] < 0
     streaks = _compute_streaks(is_loss)
@@ -291,6 +301,11 @@ def streak_distribution(df: pd.DataFrame) -> Dict[str, Dict[int, int]]:
         df_sorted = df.sort_values('timestamp_exit')
     else:
         df_sorted = df
+    
+    # remove breakevens
+    filtered = df_sorted[df_sorted['pnl'] != 0]
+    if len(filtered) == 0:
+        return {'wins': {}, 'losses': {}}
     
     is_win = df_sorted['pnl'] > 0
     streaks = _compute_streaks(is_win)
