@@ -30,11 +30,11 @@ The module includes:
 
 All metrics assume that:
 
-Positive `pnl` = win
+- Positive `pnl` = win
 
-Negative `pnl` = loss
+- Negative `pnl` = loss
 
-Zero `pnl` = breakeven (excluded from streaks)
+- Zero `pnl` = breakeven (excluded from streaks)
 
 ## Requirements
 
