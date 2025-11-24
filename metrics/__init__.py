@@ -15,6 +15,7 @@ from .winloss.winloss import (
 
 from .equitycurve.equitycurve import (
     to_equity_curve,
+    resample_equity_curve
 )
 
 from .tradelog.tradelog import (
