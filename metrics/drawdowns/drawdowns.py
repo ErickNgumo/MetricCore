@@ -78,7 +78,8 @@ def identify_drawdown_periods(equity_curve: pd.DataFrame) -> List[Dict]:
     
     periods = []
     in_drawdown = False
-    current_period = None
+    current_period: = None
+
     
     for idx, row in dd_series.iterrows():
         if row['underwater'] and not in_drawdown:
@@ -184,5 +185,99 @@ def maximum_drawdown(equity_curve: pd.DataFrame) -> Dict:
         'duration_to_trough': max_dd_idx - peak_idx,
         'duration_to_recovery': duration_to_recovery,
         'currently_in_drawdown': currently_in_dd
+    }
+
+
+def average_drawdown(equity_curve: pd.DataFrame) -> float:
+    """
+    Calculate the average drawdown across all drawdown periods.
+    
+    This gives a sense of typical drawdown magnitude, not just the worst case.
+    
+    Args:
+        equity_curve: DataFrame from to_equity_curve()
+        
+    Returns:
+        Average drawdown percentage across all periods
+        
+    Example:
+        >>> avg_dd = average_drawdown(equity)
+        >>> print(f"Typical drawdown: {avg_dd:.2f}%")
+    """
+    periods = identify_drawdown_periods(equity_curve)
+    
+    if not periods:
+        return 0.0
+    
+    drawdowns = [abs(p['max_drawdown_pct']) for p in periods]
+    return np.mean(drawdowns)
+
+
+def drawdown_duration_stats(equity_curve: pd.DataFrame) -> Dict:
+    """
+    Calculate statistics about drawdown durations.
+    
+    Args:
+        equity_curve: DataFrame from to_equity_curve()
+        
+    Returns:
+        Dictionary with:
+            - avg_duration: Average number of trades in drawdown
+            - max_duration: Longest drawdown duration
+            - median_duration: Median drawdown duration
+            - total_periods: Number of drawdown periods
+            - currently_underwater: Boolean if currently in drawdown
+            
+    Example:
+        >>> duration_stats = drawdown_duration_stats(equity)
+        >>> print(f"Average time in drawdown: {duration_stats['avg_duration']} trades")
+    """
+    periods = identify_drawdown_periods(equity_curve)
+    
+    if not periods:
+        return {
+            'avg_duration': 0,
+            'max_duration': 0,
+            'median_duration': 0,
+            'total_periods': 0,
+            'currently_underwater': False
+        }
+    
+    durations = [p['duration'] for p in periods]
+    
+    return {
+        'avg_duration': np.mean(durations),
+        'max_duration': np.max(durations),
+        'median_duration': np.median(durations),
+        'total_periods': len(periods),
+        'currently_underwater': not periods[-1]['recovered'] if periods else False
+    }
+
+def underwater_time(equity_curve: pd.DataFrame) -> Dict:
+    """
+    Calculate the percentage of time spent in drawdown.
+    
+    Args:
+        equity_curve: DataFrame from to_equity_curve()
+        
+    Returns:
+        Dictionary with:
+            - underwater_trades: Number of trades in drawdown
+            - total_trades: Total number of trades
+            - underwater_pct: Percentage of time underwater
+            
+    Example:
+        >>> underwater = underwater_time(equity)
+        >>> print(f"Spent {underwater['underwater_pct']:.1f}% of time in drawdown")
+    """
+    dd_series = calculate_drawdown_series(equity_curve)
+    
+    underwater_trades = dd_series['underwater'].sum()
+    total_trades = len(dd_series)
+    
+    return {
+        'underwater_trades': int(underwater_trades),
+        'total_trades': total_trades,
+        'underwater_pct': (underwater_trades / total_trades * 100) if total_trades > 0 else 0.0
     }
 
