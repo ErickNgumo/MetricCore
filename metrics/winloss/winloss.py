@@ -348,7 +348,7 @@ def win_loss_ratio(df: pd.DataFrame) -> float:
     return avg_w / abs(avg_l)
 
 
-def summary(df: pd.DataFrame) -> Dict[str, float]:
+def winloss_summary(df: pd.DataFrame) -> Dict[str, float]:
     """
     Generate a comprehensive win/loss summary report.
     
