@@ -1,3 +1,14 @@
+#trade log imports
+from .tradelog.tradelog import (
+    TradeLog
+)
+#equity curve imports
+from .equitycurve.equitycurve import (
+    to_equity_curve,
+    resample_equity_curve
+)
+
+#Winloss Imports
 from .winloss.winloss import (
     win_rate,
     loss_rate,
@@ -10,15 +21,17 @@ from .winloss.winloss import (
     longest_loss_streak,
     streak_distribution,
     win_loss_ratio,
-    summary
+    winloss_summary
 )
 
-from .equitycurve.equitycurve import (
-    to_equity_curve,
-    resample_equity_curve
-)
+#drawdown imports
+from .drawdowns.drawdowns import (
+    identify_drawdown_periods,
+    maximum_drawdown,
+    average_drawdown,
+    drawdown_duration_stats,
+    underwater_time,
+    drawdown_summary
 
-from .tradelog.tradelog import (
-    TradeLog
 )
 

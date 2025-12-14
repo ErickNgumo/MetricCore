@@ -78,7 +78,7 @@ def identify_drawdown_periods(equity_curve: pd.DataFrame) -> List[Dict]:
     
     periods = []
     in_drawdown = False
-    current_period: = None
+    current_period = None
 
     
     for idx, row in dd_series.iterrows():
@@ -281,3 +281,46 @@ def underwater_time(equity_curve: pd.DataFrame) -> Dict:
         'underwater_pct': (underwater_trades / total_trades * 100) if total_trades > 0 else 0.0
     }
 
+
+def drawdown_summary(equity_curve: pd.DataFrame) -> Dict:
+    """
+    Generate a comprehensive drawdown analysis report.
+    
+    Args:
+        equity_curve: DataFrame from to_equity_curve()
+        
+    Returns:
+        Dictionary containing all key drawdown metrics
+        
+    Example:
+        >>> from metrics.drawdown import summary
+        >>> dd_summary = summary(equity)
+        >>> for key, value in dd_summary.items():
+        ...     print(f"{key}: {value}")
+    """
+    max_dd = maximum_drawdown(equity_curve)
+    avg_dd = average_drawdown(equity_curve)
+    duration_stats = drawdown_duration_stats(equity_curve)
+    uw_time = underwater_time(equity_curve)
+    periods = identify_drawdown_periods(equity_curve)
+    
+    return {
+        # Maximum drawdown
+        'max_drawdown_pct': max_dd['max_drawdown_pct'],
+        'max_drawdown_amount': max_dd['max_drawdown_amount'],
+        'max_dd_duration': max_dd['duration_to_recovery'],
+        'currently_in_max_dd': max_dd['currently_in_drawdown'],
+        
+        # Average metrics
+        'average_drawdown_pct': avg_dd,
+        'avg_drawdown_duration': duration_stats['avg_duration'],
+        
+        # Duration statistics
+        'longest_drawdown_duration': duration_stats['max_duration'],
+        'total_drawdown_periods': duration_stats['total_periods'],
+        
+        # Time analysis
+        'underwater_pct': uw_time['underwater_pct'],
+        'underwater_trades': uw_time['underwater_trades']      
+        
+    }
